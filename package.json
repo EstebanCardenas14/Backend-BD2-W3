@@ -1,0 +1,30 @@
+{
+  "name": "taller-3",
+  "version": "1.0.0",
+  "description": "Workshop 3 DataBase 2 Universidad El Bosque",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EstebanCardenas14/Backend-BD2-W3.git"
+  },
+  "keywords": [
+    "Mongo",
+    "PostgreSQL",
+    "Redist"
+  ],
+  "author": "Cardenas Cortes Luis Esteban, Sanchez Malagon Cristian David, Anaya Paula Andrea",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/EstebanCardenas14/Backend-BD2-W3/issues"
+  },
+  "homepage": "https://github.com/EstebanCardenas14/Backend-BD2-W3#readme",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "express": "^4.17.3",
+    "nodemon": "^2.0.15",
+    "redis-om": "^0.2.1"
+  }
+}
