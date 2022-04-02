@@ -1,4 +1,6 @@
 const redis = require("ioredis");
+const colors = require("colors");
+
 
 module.exports = class RedisConnection {
     constructor() {
@@ -17,11 +19,11 @@ module.exports = class RedisConnection {
         });
 
         client.on("connect", () => {
-            console.log("Connectado a redis");
+            console.log('redis connected'.underline.magenta.bold);
         });
 
         client.on("error", err => {
-            console.log(`Redis error: ${err}`);
+            console.log(`Redis error: ${err}`.underline.red.bold);
         });
 
         return client;
@@ -35,9 +37,5 @@ module.exports = class RedisConnection {
         return await this.client.set(key, value);
     }
 
-    listen(){
-        this.client.on("message", (channel, message) => {
-            console.log(`Message received: ${message}`);
-        });
-    }
+   
 }
