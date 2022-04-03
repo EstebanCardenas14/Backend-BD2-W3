@@ -25,6 +25,8 @@ app.use('/rol', require('./src/routes/rol.routes'));
 app.use('/comprador', require('./src/routes/comprador.routes'));
 app.use('/vendedor', require('./src/routes/vendedor.routes'));
 app.use('/marca', require('./src/routes/marca.routes'));
+app.use('/proveedor', require('./src/routes/proveedor.routes'));
+
 
 
 //Route default

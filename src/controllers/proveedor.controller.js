@@ -24,3 +24,59 @@ const create = async (req = request, res = response) => {
 
     }
 }
+
+const getById = async (req = request, res = response) => {
+    try {
+        const { id } = req.params;
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${id}`);
+        return res.status(200).json({
+            ok: true,
+            message: 'Proveedor encontrado',
+            proveedor: proveedor.rows
+        });
+    } catch (error) {
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor'
+        });
+    }
+}
+
+const getAll = async (req = request, res = response) => {
+    try {
+        const proveedor = await db.query(`SELECT * FROM proveedor`);
+        return res.status(200).json({
+            ok: true,
+            message: 'Proveedores encontrados',
+            proveedor: proveedor.rows
+        });
+    } catch (error) {
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor'
+        });
+    }
+}
+
+const deleteById = async (req = request, res = response) => {
+    try {
+        const { id } = req.params;
+        await db.query(`DELETE FROM proveedor WHERE proveedor_id = ${id}`);
+        return res.status(200).json({
+            ok: true,
+            message: 'Proveedor eliminado'
+        });
+    } catch (error) {
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor'
+        });
+    }
+}
+
+module.exports = {
+    create,
+    getById,
+    getAll,
+    deleteById
+}
