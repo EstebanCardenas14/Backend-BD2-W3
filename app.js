@@ -20,7 +20,9 @@ app.use(express.json());
 app.use(cors());
 
 //Routes
-app.use('/Doc', require('./src/routes/documents.routes'));
+app.use('/doc', require('./src/routes/documents.routes'));
+app.use('/rol', require('./src/routes/rol.routes'));
+
 
 //Route default
 app.use('/', (req, res, next) => {
