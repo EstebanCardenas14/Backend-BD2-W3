@@ -19,7 +19,7 @@ module.exports = class RedisConnection {
         });
 
         client.on("connect", () => {
-            console.log('redis connected'.underline.magenta.bold);
+            console.log(`Redis: \x1b[32m%s\x1b[0m`.bold ,'online'. underline.yellow.bold);
         });
 
         client.on("error", err => {
