@@ -27,6 +27,7 @@ app.use('/vendedor', require('./src/routes/vendedor.routes'));
 app.use('/marca', require('./src/routes/marca.routes'));
 app.use('/proveedor', require('./src/routes/proveedor.routes'));
 app.use('/categoria', require('./src/routes/categoria.routes'));
+app.use('/producto', require('./src/routes/producto.routes'));
 
 
 

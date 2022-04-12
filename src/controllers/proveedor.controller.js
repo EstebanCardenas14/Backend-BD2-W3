@@ -2,28 +2,54 @@ const { request, response } = require('express');
 const db = require('../database/postgres-connection');
 
 const create = async (req = request, res = response) => {
+    const { proveedor_id,usuario_id } = req.body;
+
     try{
-        //Save the proveedor collected in the body
-        const {usuario_id, estado} = req.body;
-        
-        const userProv = await db.query(`SELECT * FROM usuario usuario_id = ${usuario_id}`);
-        const userProvDB = userProv.rows[0];
-        console.log(userProvDB);
-        
-        await db.query(`INSERT INTO proveedor (usuario_id, estado) VALUES ('${usuario_id}','${estado}')`);
+        //verify that there is no proveedor with prov_id
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = '${proveedor_id}'`);
+        if (proveedor.rows.length > 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El proveedor ya existe'
+            });
+        }
+        //verify the existence of the user in the database
+        const user = await db.query(`SELECT * FROM usuario WHERE usuario_id = '${usuario_id}'`);
+        if (user.rows.length === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El usuario no existe'
+            });
+        }
+
+        //insert proveedor
+        await db.query(`INSERT INTO proveedor (proveedor_id, usuario_id, estado) VALUES ('${proveedor_id}', '${usuario_id}', true)`);
+
+        //bring the new proveedor
+        const newProveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = '${proveedor_id}'`);
+        if (newProveedor.rows.length === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El proveedor no existe'
+            });
+        }
+
         return res.status(200).json({
             ok: true,
-            message: 'Proveedor creado'
+            message: 'Proveedor creado',
+            proveedor: newProveedor.rows
         });
+
     } catch (error) {
-        console.log(error);
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor'
         });
-
+        
     }
-}
+    
+    }
+
 
 const getById = async (req = request, res = response) => {
     try {

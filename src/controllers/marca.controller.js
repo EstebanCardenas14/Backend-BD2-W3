@@ -29,6 +29,7 @@ const create = async (req = request, res = response) => {
         if(marcaResult.rowCount > 0){
             return res.status(200).json({
                 ok: true,
+                message: 'Marca creada',
                 marca: marcaResult.rows[0]
             });
         }

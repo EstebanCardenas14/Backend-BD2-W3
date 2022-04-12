@@ -16,7 +16,7 @@ const create = async (req = request, res = response) => {
         }
 
         //verify the existence of the role in the database
-        const rolUser = await db.query(`SELECT * FROM rol WHERE descripcion = 'Comprador'`);
+        const rolUser = await db.query(`SELECT * FROM rol WHERE descripcion = 'comprador'`);
         if (rolUser.rows.length === 0) {
             return res.status(400).json({
                 ok: false,
@@ -38,7 +38,9 @@ const create = async (req = request, res = response) => {
         pass = bcrypt.hashSync(password, salt);
 
         //Insert the new buyer in the database
-        await db.query(`INSERT INTO usuario (rol_id, doc_id, username, num_doc, nombres, apellidos, telefono, correo, clave, estado) VALUES (${rolUser.rows[0].id_rol},${doc_typeUser.rows[0].id_documento},'${username}',${num_doc},'${name}','${lastname}',${phone},'${email}','${pass}',true)`);
+        await db.query(`INSERT INTO usuario (rol_id, doc_id, username, num_doc, nombres, apellidos, telefono, correo, clave, estado) VALUES (${rolUser.rows[0].id_rol},${doc_typeUser.rows[0].id_documento},${num_doc},'${username}','${name}','${lastname}',${phone},'${email}','${password}',true)`);
+
+        
 
         //bring the new buyer
         const user = await db.query(`SELECT * FROM usuario WHERE username = '${username}'`);
