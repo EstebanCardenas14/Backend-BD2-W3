@@ -11,7 +11,7 @@ const app = express();
 //Conection to Redis
 const redis = new Redisconnection();
 //Conection to MongoDB
-mongoDB();
+//mongoDB();
 //Conection to Postgres
 //postgres();  
 

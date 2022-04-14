@@ -2,7 +2,7 @@ const { request, response } = require('express');
 const db = require('../database/postgres-connection');
 
 const create = async (req = request, res = response) => {
-    const { producto_id,marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion} = req.body;
+    const { producto_id,marca_id,proveedor_id,categoria_id,titulo,precio,caracteristicas,descripcion,stock} = req.body;
 
     try{
         //verify that there is no producto with producto_id
@@ -30,8 +30,18 @@ const create = async (req = request, res = response) => {
             });
         }
 
+         //verify the existence of the categoria in the database
+            const categoria = await db.query(`SELECT * FROM categoria WHERE categoria_id = '${categoria_id}'`);
+            if (categoria.rows.length === 0) {
+                return res.status(400).json({
+                    ok: false,
+                    message: 'La categoria no existe'
+                });
+            }
+
         //insert producto
-        await db.query(`INSERT INTO producto (producto_id, marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion, estado) VALUES ('${producto_id}', '${marca_id}', '${proveedor_id}', '${titulo}', '${precio}', '${caracteristicas}', '${descripcion}', true)`);
+        await db.query(`INSERT INTO producto (producto_id, marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion, estado,stock) VALUES (${producto_id}, ${marca_id}, ${proveedor_id}, '${titulo}', ${precio}, '${caracteristicas}', '${descripcion}', true, ${stock})`);
+        
 
         //bring the new producto
         const newProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${producto_id}'`);
@@ -94,7 +104,7 @@ const getAll = async (req = request, res = response) => {
 
 const update = async (req = request, res = response) => {
     const { id } = req.params;
-    const { marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion } = req.body;
+    const { marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion, stock } = req.body;
 
     try {
         //verify that there is a producto with producto_id
@@ -123,7 +133,7 @@ const update = async (req = request, res = response) => {
         }
 
         //update producto
-        await db.query(`UPDATE producto SET marca_id = '${marca_id}', proveedor_id = '${proveedor_id}', titulo = '${titulo}', precio = '${precio}', caracteristicas = '${caracteristicas}', descripcion = '${descripcion}' WHERE producto_id = '${id}'`);
+        await db.query(`UPDATE producto SET marca_id = ${marca_id}, proveedor_id = ${proveedor_id}, titulo = '${titulo}', precio = ${precio}, caracteristicas = '${caracteristicas}', descripcion = '${descripcion}',stock = ${stock} WHERE producto_id = '${id}'`);
 
         //bring the updated producto
         const updatedProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
@@ -164,14 +174,14 @@ const deleteProducto = async (req = request, res = response) => {
         //delete producto
         await db.query(`DELETE FROM producto WHERE producto_id = '${id}'`);
 
-        //bring the deleted producto
-        const deletedProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
-        if (deletedProducto.rows.length > 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El producto no existe'
-            });
-        }
+        // //bring the deleted producto
+        // const deletedProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
+        // if (deletedProducto.rows.length > 0) {
+        //     return res.status(400).json({
+        //         ok: false,
+        //         message: 'El producto no existe'
+        //     });
+        // }
 
         return res.status(200).json({
             ok: true,
@@ -185,6 +195,7 @@ const deleteProducto = async (req = request, res = response) => {
         });
     }
 }
+  
 
 module.exports = {
     create,
