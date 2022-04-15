@@ -88,6 +88,43 @@ const getAll = async (req = request, res = response) => {
 
  }
 
+ const getByVariant = async (req = request, res = response) => {
+    try{
+        const { id } = req.params;
+        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
+        const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${id}`);
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${producto.rows[0].proveedor_id}`);
+
+        if (producto.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto no existe'
+            });
+        }
+
+        if (proveedor.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El proveedor no existe'
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: 'Producto encontrado',
+            producto: producto.rows[0],
+            variante: variante.rows
+        });
+    }catch(error){
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+    }
+}
+    
+
  const updateById = async (req = request, res = response) => {
     const { id } = req.params;
     const { marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion } = req.body;
@@ -170,5 +207,6 @@ module.exports = {
     getProductById,
     getAll,
     updateById,
-    deleteById
+    deleteById,
+    getByVariant
 }
