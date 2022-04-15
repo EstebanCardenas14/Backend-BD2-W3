@@ -3,3 +3,6 @@ node_modules
 
 # Ignora el .env
 .env
+
+#Ignora la carpeta storage
+storage

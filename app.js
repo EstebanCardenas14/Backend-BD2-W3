@@ -3,7 +3,7 @@ const cors = require('cors');
 const fileUpload = require('express-fileupload');
 const path = require('path');
 
-const Redisconnection = require('./src/database/redis-connection');
+//const Redisconnection = require('./src/database/redis-connection');
 const {mongoDB} = require('./src/database/mongose-connection');
 //const {postgres} = require('./src/database/postgres-connection');
 
@@ -11,7 +11,7 @@ require('dotenv').config();
 const app = express();
 
 //Conection to Redis
-const redis = new Redisconnection();
+//const redis = new Redisconnection();
 //Conection to MongoDB
 //mongoDB();
 //Conection to Postgres
@@ -40,6 +40,7 @@ app.use('/proveedor', require('./src/routes/proveedor.routes'));
 app.use('/categoria', require('./src/routes/categoria.routes'));
 app.use('/producto', require('./src/routes/producto.routes'));
 app.use('/variante', require('./src/routes/variante.routes'));
+app.use('/redis', require('./src/routes/redis.routes'));
 
 
 

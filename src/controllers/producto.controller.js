@@ -1,6 +1,10 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
 const {uploadFile,deleteFile} = require('../helpers');
+const redis = require('../database/redis-connection');
+const axios = require('axios');
+const { Client } = require('redis-om');
+
 
 const uploadImg = async (req = request, res = response) => {
     try{
