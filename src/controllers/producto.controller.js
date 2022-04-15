@@ -257,11 +257,115 @@ const deleteById = async (req = request, res = response) => {
     }
 }
 
+const addCategories = async (req = request, res = response) => {
+    const { producto_id } = req.params;
+    const { categoria_id } = req.body;
+    try {
+        //verify the existence of the product
+        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${producto_id}`);
+        if (product.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto no existe'
+            });
+        }
+
+        //verify the existence of the category
+        const categoria = await db.query(`SELECT * FROM categoria WHERE categoria_id = ${categoria_id}`);
+        if (categoria.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: `'La categoria no existe'`
+            });
+        }
+    
+        //Verify if the product is already in the category
+        const productInCategory = await db.query(`SELECT * FROM producto_categoria WHERE producto_id = ${producto_id} AND categoria_id = ${categoria_id}`);
+        if (productInCategory.rowCount !== 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto ya esta asociado a la categoria'
+            });
+        }
+
+        //add the category
+        const addCategory = await db.query(`INSERT INTO producto_categoria (producto_id, categoria_id) VALUES (${producto_id}, ${categoria_id}) RETURNING *`);
+        if (addCategory.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La categoria no se pudo agregar'
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: `La categoria ${categoria.rows[0].nombre} se agrego correctamente al producto : ${product.rows[0].titulo}`
+
+        });
+    } catch (error) {
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+    }
+}
+
+const getProductsByCategory = async (req = request, res = response) => {
+    const { categoria_id } = req.params;
+    try {
+        //verify the existence of the category
+        const categoria = await db.query(`SELECT * FROM categoria WHERE categoria_id = ${categoria_id}`);
+        if (categoria.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La categoria no existe'
+            });
+        }
+
+        //get the products
+        const cat_prod = await db.query(`SELECT * FROM producto_categoria WHERE categoria_id = ${categoria_id}`);
+        if (cat_prod.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No hay productos en esta categoria'
+            });
+        }
+
+        let productos = [];
+        for(let index in cat_prod.rows){
+            const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${cat_prod.rows[index].producto_id}`);
+            productos.push(product.rows[0]);
+        }
+
+        if (productos.length === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'Error al obtener los productos'
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: 'Productos obtenidos',
+            productos
+        });
+    } catch (error) {
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+    }
+}
+
 module.exports = {
     uploadImg,
     create,
     getProductById,
     getAll,
     updateById,
-    deleteById
+    deleteById,
+    addCategories,
+    getProductsByCategory
 }
