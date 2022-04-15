@@ -1,12 +1,12 @@
 const {Router} = require('express');
 const router = Router();
 
-const { create,getById,getAll,remove,update } = require('../controllers/rol.controller');
+const { create,getById,getAll,deleteById,update } = require('../controllers/variante.controller');
 
 router.post('/create', create);
 router.get('/getById/:id', getById);
 router.get('/getAll', getAll);
-router.delete('/remove/:id', remove);
+router.delete('/deleteById/:id', deleteById);
 router.put('/update/:id', update);
 
 module.exports = router;

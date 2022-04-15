@@ -1,67 +1,29 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
+const { validateUser, createUser, updateUser } = require('../helpers/index');
 const bcrypt = require('bcryptjs');
+const { user } = require('pg/lib/defaults');
 
 const create = async (req = request, res = response) => {
-    const { username, num_doc, doc_id, name, lastname, phone, email, password } = req.body;
+    const {  id_documento, username, num_doc, nombres, apellidos, telefono, correo, clave  } = req.body;
 
-    try {
-        //verify that there is no buyer with the username
-        const userVar = await db.query(`SELECT * FROM usuario WHERE username = '${username}'`);
-        if (userVar.rows.length > 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El usuario ya existe'
-            });
-        }
-
-        //verify the existence of the role in the database
-        const rolUser = await db.query(`SELECT * FROM rol WHERE descripcion = 'comprador'`);
-        if (rolUser.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El rol no existe'
-            });
-        }
-
-        //verify that the document exists
-        const doc_typeUser = await db.query(`SELECT * FROM documento WHERE id_documento = '${doc_id}'`);
-        if (doc_typeUser.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El documento no existe'
-            });
-        }
-
-        //Encrypt the password
-        const salt = bcrypt.genSaltSync();
-        pass = bcrypt.hashSync(password, salt);
-
-        //Insert the new buyer in the database
-        await db.query(`INSERT INTO usuario (rol_id, doc_id, username, num_doc, nombres, apellidos, telefono, correo, clave, estado) VALUES (${rolUser.rows[0].id_rol},${doc_typeUser.rows[0].id_documento},${num_doc},'${username}','${name}','${lastname}',${phone},'${email}','${password}',true)`);
-
-        
-
-        //bring the new buyer
-        const user = await db.query(`SELECT * FROM usuario WHERE username = '${username}'`);
-        if (user.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El usuario no fue agregado'
-            });
-        }
-
+    try{
+        //verify the existence of the buyer
+        await validateUser('Comprador',id_documento, username, num_doc, telefono, correo);
+        //create the buyer
+       const user = await createUser('Comprador', id_documento, username, num_doc, nombres, apellidos, telefono, correo, clave);
+        //associate the user to the buyer table
+        await db.query(`INSERT INTO comprador(usuario_id, estado) VALUES (${user.usuario_id}, ${true})`);
         return res.status(200).json({
             ok: true,
             message: 'Comprador creado',
-            comprador: user.rows
+            comprador: user
         });
 
-    } catch (error) {
-        console.log(error);
+    }catch(error){
         return res.status(400).json({
             ok: false,
-            message: 'Error en el servidor'
+            message: error
         });
     }
 
@@ -100,90 +62,76 @@ const getById = async (req = request, res = response) => {
 
 const getAll = async (req = request, res = response) => {
     try {
-         //verify the existence of the role in the database
-         const rol = await db.query(`SELECT * FROM rol WHERE descripcion = 'Comprador'`);
-         if (rol.rows.length === 0) {
-             return res.status(400).json({
-                 ok: false,
-                 message: 'El rol no existe'
-             });
-         }
+         const compradores = [];
+         const data = await db.query(`SELECT * FROM comprador`);
 
-         //bring the buyers
-        const users = await db.query(`SELECT * FROM usuario where rol_id = ${rol.rows[0].id_rol}`);
+         for(let resgister in data.rows){
+                const user = await db.query(`SELECT * FROM usuario WHERE usuario_id = '${data.rows[resgister].usuario_id}'`);
+                compradores.push(user.rows[0]);
+            }
 
-        //verify that the buyers exists
-        if (users.rows.length === 0) {
-            return res.status(200).json({
-                ok: true,
-                message: 'No hay compradores'
-            });
-        }
-
-        //return the buyers
         return res.status(200).json({
             ok: true,
             message: 'Compradores encontrados',
-            users: users.rows
+            compradores
         });
 
     } catch (error) {
-
-        //if there is an error, return the error
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor'
         });
     }
+
 }
 
-const update = async (req = request, res = response) => {
-    try {
-        //bring the id of the buyer
-        const { id } = req.params;
-        //bring the data of the buyer to update
-        const { username, doc_type, doc_num, name, lastname, phone, email, estado } = req.body;
 
+        //update the buyer
+const updateById = async(req = request, res = response) => {
+    try {
+
+        const { id } = req.params;
+        const { id_documento, username, num_doc, nombres, apellidos, telefono, correo } = req.body;
         //verify that the buyer exists
-        const user = await db.query(`SELECT * FROM usuario WHERE id_usuario = ${id}`);
+        const user = await db.query(`SELECT * FROM  WHERE comprador usuario_id = '${id}'`);
         if (user.rows.length === 0) {
             return res.status(400).json({
                 ok: false,
-                message: 'Comprador no encontrado'
+                message: 'The user is not a buyer'
             });
         }
 
-        //update the buyer
-        await db.query(`UPDATE usuario SET rol_id = '${rol}', doc_id = '${doc_type}', username = '${username}', num_doc = '${doc_num}', nombres = '${name}', apellidos = '${lastname}', telefono = '${phone}', correo = '${email}', clave = '${password}', estado = '${estado}' WHERE id_usuario = ${id}`);
+        //update the user
+        const compador = await updateUser(id, id_documento, username, num_doc, nombres, apellidos, telefono, correo);
+
         return res.status(200).json({
             ok: true,
-            message: 'Comprador actualizado'
+            message: 'Comprador actualizado',
+            comprador
         });
+
     } catch (error) {
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor'
         });
+
     }
 }
+
 
 const deleteById = async (req = request, res = response) => {
     try {
         const { id } = req.params;
-        const user = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${id}`);
-        if (user.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'Comprador no encontrado'
-            });
-        }
-        await db.query(`DELETE FROM usuario WHERE usuario_id = ${id}`);
+        //Delete the buyer
+        await db.query(`DELETE FROM comprador WHERE id_usuario = ${id}`);
+        //Delete the user
+        await db.query(`DELETE FROM usuario WHERE id_usuario = ${id}`);
         return res.status(200).json({
             ok: true,
             message: 'Comprador eliminado'
         });
     } catch (error) {
-        console.log(error);
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor'
@@ -196,7 +144,7 @@ const deleteById = async (req = request, res = response) => {
 module.exports = {
     create,
     getAll,
-    update,
+    updateById,
     deleteById,
     getById
 }

@@ -1,206 +1,174 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
+const { validateProduct} = require('../helpers/index');
 
-const create = async (req = request, res = response) => {
-    const { producto_id,marca_id,proveedor_id,categoria_id,titulo,precio,caracteristicas,descripcion,stock} = req.body;
-
+const create = async ( req = request, res = response) => {
+    const { marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion } = req.body;
     try{
-        //verify that there is no producto with producto_id
-        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = '${producto_id}'`);
-        if (producto.rows.length > 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El producto ya existe'
-            });
-        }
-        //verify the existence of the marca in the database
-        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = '${marca_id}'`);
-        if (marca.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'La marca no existe'
-            });
-        }
-        //verify the existence of the proveedor in the database
-        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = '${proveedor_id}'`);
-        if (proveedor.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El proveedor no existe'
-            });
-        }
+      //verify the existence of the product
+      await validateProduct(marca_id,proveedor_id,precio,caracteristicas,descripcion);
+        //create product
+      await db.query(`INSERT INTO producto (marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion,estado) VALUES ('${marca_id}','${proveedor_id}','${titulo}','${precio}','${caracteristicas}','${descripcion}',${true});`);
 
-         //verify the existence of the categoria in the database
-            const categoria = await db.query(`SELECT * FROM categoria WHERE categoria_id = '${categoria_id}'`);
-            if (categoria.rows.length === 0) {
-                return res.status(400).json({
-                    ok: false,
-                    message: 'La categoria no existe'
-                });
-            }
+        return res.status(200).json({
+            ok: true,
+            message: 'Producto creado'
+        });
+    }catch(error){
+       console.log(error);
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+      
+     }
 
-        //insert producto
-        await db.query(`INSERT INTO producto (producto_id, marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion, estado,stock) VALUES (${producto_id}, ${marca_id}, ${proveedor_id}, '${titulo}', ${precio}, '${caracteristicas}', '${descripcion}', true, ${stock})`);
-        
+}
 
-        //bring the new producto
-        const newProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${producto_id}'`);
-        if (newProducto.rows.length === 0) {
+const getProductById = async (req = request, res = response) => {
+    try{
+        const { id } = req.params;
+        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
+
+        if (product.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
                 message: 'El producto no existe'
             });
         }
 
-        return res.status(200).json({
-            ok: true,
-            message: 'Producto creado',
-            producto: newProducto.rows
-        });
-
-    } catch (error) {
-        return res.status(400).json({
-            ok: false,
-            message: 'Error en el servidor'
-        });
-        
+        if (proveedor.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El proveedor no existe'
+            });
+        }
 
 
-    }
-}
-
-const getById = async (req = request, res = response) => {
-    try {
-        const { id } = req.params;
-        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
         return res.status(200).json({
             ok: true,
             message: 'Producto encontrado',
-            producto: producto.rows
+            producto: product.rows[0],
+            proveedor: proveedor.rows[0]
         });
-    } catch (error) {
+    }catch(error){
+
         return res.status(400).json({
             ok: false,
-            message: 'Error en el servidor'
+            message: 'Error en el servidor',
+            error
         });
     }
 }
 
 const getAll = async (req = request, res = response) => {
-    try {
-        const productos = await db.query(`SELECT * FROM producto`);
+    try{
+        const productos = [];
+        const data = await db.query(`SELECT * FROM producto`);
+
+        for(let products in data.rows){
+            const producto = await db.query(`SELECT * FROM producto WHERE producto_id = ${data.rows[products].proveedor_id}`);
+            productos.push(producto.rows[0]);
+        }
+
         return res.status(200).json({
             ok: true,
             message: 'Productos encontrados',
-            productos: productos.rows
+            productos
         });
-    } catch (error) {
+    }catch(error){
         return res.status(400).json({
             ok: false,
-            message: 'Error en el servidor'
+            message: 'Error en el servidor',
+            error
         });
     }
-}
 
-const update = async (req = request, res = response) => {
+ }
+
+ const updateById = async (req = request, res = response) => {
     const { id } = req.params;
-    const { marca_id, proveedor_id, titulo, precio, caracteristicas, descripcion, stock } = req.body;
-
-    try {
-        //verify that there is a producto with producto_id
-        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
-        if (producto.rows.length === 0) {
+    const { marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion } = req.body;
+    try{
+      
+        //verify the existence of the product
+        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
+        if (product.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
                 message: 'El producto no existe'
             });
         }
-        //verify the existence of the marca in the database
-        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = '${marca_id}'`);
-        if (marca.rows.length === 0) {
+
+        //validate the brand of marca
+        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${marca_id}`);
+        if (marca.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
                 message: 'La marca no existe'
             });
         }
-        //verify the existence of the proveedor in the database
-        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = '${proveedor_id}'`);
-        if (proveedor.rows.length === 0) {
+
+       //verify the title of the product
+       const title = await db.query(`SELECT * FROM producto WHERE titulo = '${titulo}'`);
+         if (title.rowCount !== 0) {
             return res.status(400).json({
                 ok: false,
-                message: 'El proveedor no existe'
+                message: 'El titulo ya existe'
             });
         }
 
-        //update producto
-        await db.query(`UPDATE producto SET marca_id = ${marca_id}, proveedor_id = ${proveedor_id}, titulo = '${titulo}', precio = ${precio}, caracteristicas = '${caracteristicas}', descripcion = '${descripcion}',stock = ${stock} WHERE producto_id = '${id}'`);
-
-        //bring the updated producto
-        const updatedProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
-        if (updatedProducto.rows.length === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El producto no existe'
-            });
-        }
+        //update the product
+        const update = await db.query(`UPDATE producto SET marca_id = '${marca_id}', proveedor_id = '${proveedor_id}', titulo = '${titulo}', precio = '${precio}', caracteristicas = '${caracteristicas}', descripcion = '${descripcion}' WHERE producto_id = ${id}`);
 
         return res.status(200).json({
             ok: true,
-            message: 'Producto actualizado',
-            producto: updatedProducto.rows
+            message: 'Producto actualizado'
         });
-
-    } catch (error) {
+    }catch(error){
         return res.status(400).json({
             ok: false,
-            message: 'Error en el servidor'
+            message: 'Error en el servidor',
+            error
         });
     }
-}
 
-const deleteProducto = async (req = request, res = response) => {
+ }
+
+const deleteById = async (req = request, res = response) => {
     const { id } = req.params;
-
-    try {
-        //verify that there is a producto with producto_id
-        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
-        if (producto.rows.length === 0) {
+    try{
+        //verify the existence of the product
+        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
+        if (product.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
                 message: 'El producto no existe'
             });
         }
 
-        //delete producto
-        await db.query(`DELETE FROM producto WHERE producto_id = '${id}'`);
-
-        // //bring the deleted producto
-        // const deletedProducto = await db.query(`SELECT * FROM producto WHERE producto_id = '${id}'`);
-        // if (deletedProducto.rows.length > 0) {
-        //     return res.status(400).json({
-        //         ok: false,
-        //         message: 'El producto no existe'
-        //     });
-        // }
+        //delete the product
+        const deleteProduct = await db.query(`DELETE FROM producto WHERE producto_id = ${id}`);
 
         return res.status(200).json({
             ok: true,
             message: 'Producto eliminado'
         });
-
-    } catch (error) {
+    }catch(error){
         return res.status(400).json({
             ok: false,
-            message: 'Error en el servidor'
+            message: 'Error en el servidor',
+            error
         });
     }
 }
-  
 
 module.exports = {
     create,
-    getById,
+    getProductById,
     getAll,
-    update,
-    deleteProducto
+    updateById,
+    deleteById
 }
