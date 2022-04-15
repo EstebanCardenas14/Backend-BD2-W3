@@ -1,44 +1,38 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
-const { validateProduct} = require('../helpers/index');
+const {uploadFile,deleteFile} = require('../helpers');
 
-const create = async ( req = request, res = response) => {
-    const { marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion } = req.body;
+const uploadImg = async (req = request, res = response) => {
     try{
-      //verify the existence of the product
-      await validateProduct(marca_id,proveedor_id,precio,caracteristicas,descripcion);
-        //create product
-      await db.query(`INSERT INTO producto (marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion,estado) VALUES ('${marca_id}','${proveedor_id}','${titulo}','${precio}','${caracteristicas}','${descripcion}',${true});`);
 
-        return res.status(200).json({
+        const path = await uploadFile(req.files.archivo,['png', 'jpg', 'jpeg'] ,'producto/');
+        const pathRoute = `${process.env.ROUTE_IMG}/storage/producto/`+ path;
+        //console.log(pathRoute);
+        
+        res.status(200).json({
             ok: true,
-            message: 'Producto creado'
+            message: 'Imagen subida con exito',
+            pathRoute
         });
-    }catch(error){
-       console.log(error);
-        return res.status(400).json({
+
+    }
+    catch(error){
+        //If there is an error return the error
+        return res.status(500).json({
             ok: false,
-            message: 'Error en el servidor',
+            message: 'Error al actualizar la imagen de la marca',
             error
         });
-      
-     }
-
+    }
 }
 
-const getProductById = async (req = request, res = response) => {
-    try{
-        const { id } = req.params;
-        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
-        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
+const create = async (req = request, res = response) => {
+    const { proveedor_id } = req.params;
+    const { marca_id, imagen, titulo, descripcion } = req.body;
+    try {
 
-        if (product.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El producto no existe'
-            });
-        }
-
+        //validate the existence of the provider
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${proveedor_id}`);
         if (proveedor.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
@@ -46,14 +40,90 @@ const getProductById = async (req = request, res = response) => {
             });
         }
 
+        //validate the brand of marca
+        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${marca_id}`);
+        if (marca.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La marca no existe'
+            });
+        }
+
+        //create the product
+        const createProduct = await db.query(`INSERT INTO producto (marca_id,proveedor_id, imagen, titulo, descripcion,estado) VALUES (${marca_id}, ${proveedor_id}, '${imagen}', '${titulo}', '${descripcion}',${true}) RETURNING *`);
+        if (createProduct.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto no se pudo crear'
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: 'Producto creado',
+            producto: createProduct.rows[0]
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+
+    }
+
+}
+
+const getProductById = async (req = request, res = response) => {
+    try {
+        const { id } = req.params;
+        //verify the existence of the product
+        const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
+        if (product.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto no existe'
+            });
+        }
+
+        //verify the existence of the marca
+        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
+        if (marca.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La marca no existe'
+            });
+        }
+
+        //verify the existence of the provider
+        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
+        if (proveedor.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El proveedor no existe'
+            });
+        }
+
+        //verify the existence of the user
+        const user = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
+        if (user.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El usuario no existe'
+            });
+        }
 
         return res.status(200).json({
             ok: true,
             message: 'Producto encontrado',
             producto: product.rows[0],
-            proveedor: proveedor.rows[0]
+            marca: marca.rows[0],
+            proveedor: user.rows[0]
         });
-    }catch(error){
+        
+    } catch (error) {
 
         return res.status(400).json({
             ok: false,
@@ -64,21 +134,22 @@ const getProductById = async (req = request, res = response) => {
 }
 
 const getAll = async (req = request, res = response) => {
-    try{
-        const productos = [];
-        const data = await db.query(`SELECT * FROM producto`);
-
-        for(let products in data.rows){
-            const producto = await db.query(`SELECT * FROM producto WHERE producto_id = ${data.rows[products].proveedor_id}`);
-            productos.push(producto.rows[0]);
+    try {
+        const productos = await db.query(`SELECT * FROM producto`);
+        if (productos.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No hay productos'
+            });
         }
 
         return res.status(200).json({
             ok: true,
             message: 'Productos encontrados',
-            productos
+            productos: productos.rows
         });
-    }catch(error){
+
+    } catch (error) {
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor',
@@ -86,50 +157,13 @@ const getAll = async (req = request, res = response) => {
         });
     }
 
- }
-
- const getByVariant = async (req = request, res = response) => {
-    try{
-        const { id } = req.params;
-        const producto = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
-        const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${id}`);
-        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${producto.rows[0].proveedor_id}`);
-
-        if (producto.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El producto no existe'
-            });
-        }
-
-        if (proveedor.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El proveedor no existe'
-            });
-        }
-
-        return res.status(200).json({
-            ok: true,
-            message: 'Producto encontrado',
-            producto: producto.rows[0],
-            variante: variante.rows
-        });
-    }catch(error){
-        return res.status(400).json({
-            ok: false,
-            message: 'Error en el servidor',
-            error
-        });
-    }
 }
-    
 
- const updateById = async (req = request, res = response) => {
+const updateById = async (req = request, res = response) => {
     const { id } = req.params;
-    const { marca_id,proveedor_id,titulo,precio,caracteristicas,descripcion } = req.body;
-    try{
-      
+    const { marca_id,imagen, titulo, descripcion } = req.body;
+    try {
+
         //verify the existence of the product
         const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
         if (product.rowCount === 0) {
@@ -148,23 +182,40 @@ const getAll = async (req = request, res = response) => {
             });
         }
 
-       //verify the title of the product
-       const title = await db.query(`SELECT * FROM producto WHERE titulo = '${titulo}'`);
-         if (title.rowCount !== 0) {
+        //validate the title of product
+        if (titulo.length === 0) {
             return res.status(400).json({
                 ok: false,
-                message: 'El titulo ya existe'
+                message: 'El titulo no puede estar vacio'
             });
         }
 
+        //validate the description of product
+        if (descripcion.length === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La descripcion no puede estar vacia'
+            });
+        }
+
+        // Limpiar imágenes previas
+        if (product.rows[0].imagen) {
+            // Hay que borrar la imagen del servidor
+            const path = product.rows[0].imagen.split('/');
+     
+            await deleteFile(path[5], 'producto/');
+        }
+
         //update the product
-        const update = await db.query(`UPDATE producto SET marca_id = '${marca_id}', proveedor_id = '${proveedor_id}', titulo = '${titulo}', precio = '${precio}', caracteristicas = '${caracteristicas}', descripcion = '${descripcion}' WHERE producto_id = ${id}`);
+        const updateProduct = await db.query(`UPDATE producto SET marca_id = ${marca_id}, imagen = '${imagen}', titulo = '${titulo}', descripcion = '${descripcion}' WHERE producto_id = ${id} RETURNING *`);
+
 
         return res.status(200).json({
             ok: true,
-            message: 'Producto actualizado'
+            message: 'Producto actualizado',
+            producto: updateProduct.rows[0]
         });
-    }catch(error){
+    } catch (error) {
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor',
@@ -172,11 +223,11 @@ const getAll = async (req = request, res = response) => {
         });
     }
 
- }
+}
 
 const deleteById = async (req = request, res = response) => {
     const { id } = req.params;
-    try{
+    try {
         //verify the existence of the product
         const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${id}`);
         if (product.rowCount === 0) {
@@ -193,7 +244,7 @@ const deleteById = async (req = request, res = response) => {
             ok: true,
             message: 'Producto eliminado'
         });
-    }catch(error){
+    } catch (error) {
         return res.status(400).json({
             ok: false,
             message: 'Error en el servidor',
@@ -203,10 +254,10 @@ const deleteById = async (req = request, res = response) => {
 }
 
 module.exports = {
+    uploadImg,
     create,
     getProductById,
     getAll,
     updateById,
-    deleteById,
-    getByVariant
+    deleteById
 }

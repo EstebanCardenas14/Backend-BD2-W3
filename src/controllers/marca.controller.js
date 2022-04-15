@@ -1,50 +1,45 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
+const {uploadFile} = require('../helpers/upload-file');
 
 const create = async (req = request, res = response) => {
     try{
-        //Save the marca collected in the body
-        const { nombre } = req.body;
+        //Get the name of the marca
+        const { imagen,nombre } = req.body;
 
-        //List of marca
-        const marcaVar = await db.query('SELECT * FROM marca');
+        //validate if the marca already exists
+        const marca = await db.query(`SELECT * FROM marca WHERE nombre = '${nombre}'`);
 
-        //Loop through the list of marca to see if the marca already exists
-        for(let mar in marcaVar.rows){
-            if(marcaVar.rows[mar].nombre === nombre){
-                return res.status(400).json({
-                    ok: false,
-                    message: 'La marca ya existe'
-                });
-            }
-        }
-
-        //If the marca does not exist I create it
-        await db.query(`INSERT INTO marca (nombre, estado) VALUES ('${nombre}', ${true})`);
-
-        //Get the record of the marca created
-        const marcaResult = await db.query(`SELECT * FROM marca WHERE nombre = '${nombre}'`);
-
-        //Return the marca created
-        if(marcaResult.rowCount > 0){
-            return res.status(200).json({
-                ok: true,
-                message: 'Marca creada',
-                marca: marcaResult.rows[0]
+        //If the marca was found, I return an error
+        if(marca.rowCount > 0){
+            return res.status(400).json({
+                ok: false,
+                message: 'La marca ya existe'
             });
         }
 
-        //If the marca was not created, I return an error
-        return res.status(404).json({
+        //If the marca was not found, I create the marca
+        const create = await db.query(`INSERT INTO marca (imagen,nombre, estado) VALUES ('${imagen}','${nombre}', ${true}) RETURNING *`);
+        if(create.rowCount > 0){
+            return res.status(200).json({
+                ok: true,
+                marca: create.rows[0]
+            });
+        }
+
+        //If there is an error return the error
+        return res.status(500).json({
             ok: false,
-            message: 'Marca no creada'
+            message: 'Error al crear la marca',
+            error
         });
+
 
     }catch(error){
         //If there is an error return the error
         return res.status(500).json({
             ok: false,
-            message: 'Error al crear la marca',
+            message: 'Error en el servidor',
             error
         });
     }
@@ -59,7 +54,7 @@ const getAll = async (req = request, res = response) => {
         if(marca.rowCount > 0){
             return res.status(200).json({
                 ok: true,
-                marca: marca.rows
+                marcas: marca.rows
             });
         }
 
@@ -119,10 +114,11 @@ const update = async (req = request, res = response) => {
 
         //If the marca was found, I update the marca
         if(marca.rowCount > 0){
-            await db.query(`UPDATE marca SET nombre = '${nombre}' WHERE marca_id = ${id}`);
+            update = await db.query(`UPDATE marca SET nombre = '${nombre}' WHERE marca_id = ${id} RETURNING *`);
             return res.status(200).json({
                 ok: true,
-                message: 'Marca actualizada'
+                message: 'Marca actualizada',
+                marca: update.rows[0]
             });
         }
 
@@ -172,12 +168,39 @@ const deleteById = async (req = request, res = response) => {
     }
 }
 
+const uploadImg = async (req = request, res = response) => {
+    try{
+
+        const path = await uploadFile(req.files.archivo,['png', 'jpg', 'jpeg'] ,'marca/');
+        const pathRoute = `${process.env.ROUTE_IMG}/storage/marca/`+ path;
+        //console.log(pathRoute);
+        
+        res.status(200).json({
+            ok: true,
+            message: 'Imagen subida con exito',
+            pathRoute
+        });
+
+    }
+    catch(error){
+        //If there is an error return the error
+        return res.status(500).json({
+            ok: false,
+            message: 'Error al actualizar la imagen de la marca',
+            error
+        });
+    }
+}
+
+
+
 module.exports = {
     create,
     getAll,
     getById,
     update,
-    deleteById
+    deleteById,
+    uploadImg
 }
 
    

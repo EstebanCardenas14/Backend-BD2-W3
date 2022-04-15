@@ -26,7 +26,6 @@ const create = async (req = request, res = response) => {
       
         //Get the record of the created role
         const rolResult = await db.query(`SELECT * FROM rol WHERE descripcion = '${descripcion}'`);
-        console.log(rolResult.rows[0]);
         
         //Return the created role
         if (rolResult.rowCount > 0) { 

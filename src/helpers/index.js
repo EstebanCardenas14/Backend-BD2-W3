@@ -2,12 +2,14 @@ const jwt = require('./jwt');
 const validateUser = require('./validate-user');
 const createUser = require('./create-user');
 const updateUser = require('./update-user');
-const validateProduct = require('./validate-product');
+const uploadFile = require('./upload-file');
+const deleteFile = require('./delete-file');
 
 module.exports = {
     ...jwt,
     ...validateUser,
     ...createUser,
     ...updateUser,
-    ...validateProduct
+    ...uploadFile,
+    ...deleteFile
 };

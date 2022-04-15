@@ -1,12 +1,12 @@
 const {Router} = require('express');
 const router = Router();
 
-const { create,getAll,updateById,deleteById,getProductById,getByVariant} = require('../controllers/producto.controller');
+const {uploadImg, create,getAll,updateById,deleteById,getProductById} = require('../controllers/producto.controller');
 
-router.post('/create', create);
+router.post('/img', uploadImg);
+router.post('/create/:proveedor_id', create);
 router.get('/getAll', getAll);
 router.get('/getById/:id', getProductById);
-router.get('/getByVariant/:id', getByVariant);
 router.delete('/remove/:id', deleteById);
 router.put('/update/:id', updateById);
 
