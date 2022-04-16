@@ -37,7 +37,7 @@ const redisConnection = async() => {
               if(reply){
                     return res.status(200).json({
                         ok: true,
-                        message: 'Productos obtenidos con exito',
+                        message: 'Productos obtenidos con exito de la cache',
                         productos: JSON.parse(reply)
                     });
 
@@ -48,11 +48,35 @@ const redisConnection = async() => {
                             ok: false,
                             message: 'No hay productos'
                         });
+                    }  
+                    
+                    let products=[];
+                    for(let index in productos.rows){
+                        const product = productos.rows[index];
+                        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${productos.rows[index].marca_id}`);
+                        const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${productos.rows[index].proveedor_id}`);
+                        //traer el usuario de proveedor
+                        const usuario = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
+                       
+                       
+
+                        products.push({
+                            producto_id: product.producto_id,
+                            Image: product.imagen,
+                            Titulo: product.titulo,
+                            marca: marca.rows[0].nombre,
+                            marca_imagen: marca.rows[0].imagen,
+                            proveedor: proveedor.rows[0].proveedor_id,
+                            proveedor_nombre: usuario.rows[0].nombres,
+                            
+                           
+
+                        });
                     }
-                   await set_async('productos', JSON.stringify(productos.rows), 'EX', ttl);
+                    await set_async('productos', JSON.stringify(products), 'EX', ttl);
                     return res.status(200).json({
                         ok: true,
-                        message: 'Productos obtenidos con exito',
+                        message: 'Productos obtenidos con exito de la base de datos',
                         productos: productos.rows
                     });
                 }
