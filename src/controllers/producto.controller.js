@@ -163,6 +163,44 @@ const getAll = async (req = request, res = response) => {
 
 }
 
+const getProductByTitle = async (req = request, res = response) => {
+    try {
+        const { title } = req.params;
+        //verify the existence of the product
+        const product = await db.query(`SELECT * FROM producto WHERE titulo LIKE '%${title}%'`);
+        if (product.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'El producto no existe'
+            });
+        }
+
+        //verify the existence of the marca
+        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
+        if (marca.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'La marca no existe'
+            });
+        }
+
+        return res.status(200).json({
+            ok: true,
+            message: 'Producto encontrado',
+            producto: product.rows[0],
+            marca: marca.rows[0]
+        });
+
+    } catch (error) {
+
+        return res.status(400).json({
+            ok: false,
+            message: 'Error en el servidor',
+            error
+        });
+    }
+}
+
 const updateById = async (req = request, res = response) => {
     const { id } = req.params;
     const { marca_id,imagen, titulo, descripcion } = req.body;
@@ -367,5 +405,6 @@ module.exports = {
     updateById,
     deleteById,
     addCategories,
-    getProductsByCategory
+    getProductsByCategory,
+    getProductByTitle
 }
