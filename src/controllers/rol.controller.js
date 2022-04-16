@@ -43,7 +43,7 @@ const create = async (req = request, res = response) => {
 
 
     } catch (error) {
-        
+        console.log(error);
         //If there is an error return the error
         return res.status(500).json({
             ok: false,
