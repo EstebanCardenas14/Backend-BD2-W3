@@ -174,10 +174,27 @@ const getProductByTitle = async (req = request, res = response) => {
             });
         }
 
+        const marcas = await db.query(`SELECT * FROM marca WHERE marca_id = ${productos.rows[0].marca_id}`);
+        if (marcas.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No hay marcas'
+            });
+        }
+
+        const proveedores = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${productos.rows[0].proveedor_id}`);
+        if (proveedores.rowCount === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No hay proveedores'
+            });
+        }
         return res.status(200).json({
             ok: true,
             message: 'Productos encontrados',
-            productos: productos.rows
+            productos: productos.rows,
+            marcas: marcas.rows,
+            proveedores: proveedores.rows
         });
 
     } catch (error) {
