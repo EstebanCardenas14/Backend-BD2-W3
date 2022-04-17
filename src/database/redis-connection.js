@@ -72,13 +72,18 @@ const redisConnection = async() => {
                            
 
                         });
+
                     }
+
+                    
                     await set_async('productos', JSON.stringify(products), 'EX', ttl);
                     return res.status(200).json({
                         ok: true,
                         message: 'Productos obtenidos con exito de la base de datos',
-                        productos: productos.rows
+                        //mostrar los productos
+                        productos: products
                     });
+                    
                 }
         } catch (error) {
             console.log(error);
