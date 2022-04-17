@@ -4,6 +4,8 @@ const createUser = require('./create-user');
 const updateUser = require('./update-user');
 const uploadFile = require('./upload-file');
 const deleteFile = require('./delete-file');
+const verifyQuantity = require('./verify-quantity');
+const resetQuantity = require('./reset-product');
 
 module.exports = {
     ...jwt,
@@ -11,5 +13,7 @@ module.exports = {
     ...createUser,
     ...updateUser,
     ...uploadFile,
-    ...deleteFile
+    ...deleteFile,
+    ...verifyQuantity,
+    ...resetQuantity
 };

@@ -34,13 +34,13 @@ app.use(fileUpload({
 app.use('/doc', require('./src/routes/documents.routes'));
 app.use('/rol', require('./src/routes/rol.routes'));
 app.use('/comprador', require('./src/routes/comprador.routes'));
-app.use('/vendedor', require('./src/routes/vendedor.routes'));
 app.use('/marca', require('./src/routes/marca.routes'));
 app.use('/proveedor', require('./src/routes/proveedor.routes'));
 app.use('/categoria', require('./src/routes/categoria.routes'));
 app.use('/producto', require('./src/routes/producto.routes'));
 app.use('/variante', require('./src/routes/variante.routes'));
 app.use('/redis', require('./src/routes/redis.routes'));
+app.use('/carrito', require('./src/routes/carrito.routes'));
 
 
 

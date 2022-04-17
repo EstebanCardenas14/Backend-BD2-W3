@@ -378,7 +378,9 @@ const getProductsByCategory = async (req = request, res = response) => {
         let productos = [];
         for(let index in cat_prod.rows){
             const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${cat_prod.rows[index].producto_id}`);
-            productos.push(product.rows[0]);
+            const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
+            const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`); 
+            productos.push(product.rows[0], proveedor.rows[0], marca.rows[0]);
         }
 
         if (productos.length === 0) {
