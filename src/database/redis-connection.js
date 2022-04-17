@@ -55,8 +55,9 @@ const redisConnection = async() => {
                         const product = productos.rows[index];
                         const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${productos.rows[index].marca_id}`);
                         const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${productos.rows[index].proveedor_id}`);
-                        const usuario = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
                         const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${productos.rows[index].producto_id}`);
+                        const usuario = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
+                       
                        
                        
 
@@ -69,6 +70,7 @@ const redisConnection = async() => {
                             proveedor: proveedor.rows[0].proveedor_id,
                             proveedor_nombre: usuario.rows[0].nombres,
                             Precio: variante.rows[0].precio,
+                            
                             
                            
 
