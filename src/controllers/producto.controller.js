@@ -140,7 +140,7 @@ const getProductById = async (req = request, res = response) => {
 const getAll = async (req = request, res = response) => {
     try {
         const prod = await db.query(`SELECT * FROM producto`);
-        if (productos.rowCount === 0) {
+        if (prod.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
                 message: 'No hay productos'
@@ -168,6 +168,12 @@ const getAll = async (req = request, res = response) => {
             });
         }
 
+        if (productos.length === 0) {
+            return res.status(400).json({
+                ok: false,
+                message: 'No hay productos'
+            });
+        }
 
         return res.status(200).json({
             ok: true,
