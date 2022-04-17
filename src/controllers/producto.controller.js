@@ -1,18 +1,18 @@
 const { request, response } = require('express');
 const db = require('../database/postgres-connection');
-const {uploadFile,deleteFile} = require('../helpers');
+const { uploadFile, deleteFile } = require('../helpers');
 const redis = require('../database/redis-connection');
 const axios = require('axios');
 const { Client } = require('redis-om');
 
 
 const uploadImg = async (req = request, res = response) => {
-    try{
+    try {
 
-        const path = await uploadFile(req.files.archivo,['png', 'jpg', 'jpeg'] ,'producto/');
-        const pathRoute = `${process.env.ROUTE_IMG}/storage/producto/`+ path;
+        const path = await uploadFile(req.files.archivo, ['png', 'jpg', 'jpeg'], 'producto/');
+        const pathRoute = `${process.env.ROUTE_IMG}/storage/producto/` + path;
         //console.log(pathRoute);
-        
+
         res.status(200).json({
             ok: true,
             message: 'Imagen subida con exito',
@@ -20,7 +20,7 @@ const uploadImg = async (req = request, res = response) => {
         });
 
     }
-    catch(error){
+    catch (error) {
         //If there is an error return the error
         return res.status(500).json({
             ok: false,
@@ -126,7 +126,7 @@ const getProductById = async (req = request, res = response) => {
             marca: marca.rows[0],
             proveedor: user.rows[0]
         });
-        
+
     } catch (error) {
 
         return res.status(400).json({
@@ -208,7 +208,7 @@ const getProductByTitle = async (req = request, res = response) => {
 
 const updateById = async (req = request, res = response) => {
     const { id } = req.params;
-    const { marca_id,imagen, titulo, descripcion } = req.body;
+    const { marca_id, imagen, titulo, descripcion } = req.body;
     try {
 
         //verify the existence of the product
@@ -249,7 +249,7 @@ const updateById = async (req = request, res = response) => {
         if (product.rows[0].imagen) {
             // Hay que borrar la imagen del servidor
             const path = product.rows[0].imagen.split('/');
-     
+
             await deleteFile(path[5], 'producto/');
         }
 
@@ -321,7 +321,7 @@ const addCategories = async (req = request, res = response) => {
                 message: `'La categoria no existe'`
             });
         }
-    
+
         //Verify if the product is already in the category
         const productInCategory = await db.query(`SELECT * FROM producto_categoria WHERE producto_id = ${producto_id} AND categoria_id = ${categoria_id}`);
         if (productInCategory.rowCount !== 0) {
@@ -376,11 +376,16 @@ const getProductsByCategory = async (req = request, res = response) => {
         }
 
         let productos = [];
-        for(let index in cat_prod.rows){
+        for (let index in cat_prod.rows) {
             const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${cat_prod.rows[index].producto_id}`);
             const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
-            const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`); 
-            productos.push(product.rows[0], proveedor.rows[0], marca.rows[0]);
+            const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
+            productos.push({
+                message : `Producto #${index + 1}`,
+                producto: product.rows[0],
+                proveedor: proveedor.rows[0],
+                marca: marca.rows[0]
+            });
         }
 
         if (productos.length === 0) {
