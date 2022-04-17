@@ -139,7 +139,7 @@ const getProductById = async (req = request, res = response) => {
 
 const getAll = async (req = request, res = response) => {
     try {
-        const productos = await db.query(`SELECT * FROM producto`);
+        const prod = await db.query(`SELECT * FROM producto`);
         if (productos.rowCount === 0) {
             return res.status(400).json({
                 ok: false,
@@ -147,10 +147,32 @@ const getAll = async (req = request, res = response) => {
             });
         }
 
+        let productos = [];
+        for (let index in prod.rows) {
+            const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${prod.rows[index].producto_id}`);
+            const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${prod.rows[index].producto_id}`);
+            const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
+            const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
+
+            productos.push({
+              producto_id : product.rows[0].producto_id,
+              marca : marca.rows[0].nombre,
+              proveedor : proveedor.rows[0].nombre,
+              imagen : product.rows[0].imagen,
+              titulo : product.rows[0].titulo,
+              descripcion_1 : product.rows[0].descripcion,
+              descripcion_2 : variante.rows[0].descripcion,
+              caracteristicas : variante.rows[0].caracteristicas,
+              precio : variante.rows[0].precio,
+              stock : variante.rows[0].stock
+            });
+        }
+
+
         return res.status(200).json({
             ok: true,
             message: 'Productos encontrados',
-            productos: productos.rows
+            productos: productos
         });
 
     } catch (error) {
@@ -378,13 +400,21 @@ const getProductsByCategory = async (req = request, res = response) => {
         let productos = [];
         for (let index in cat_prod.rows) {
             const product = await db.query(`SELECT * FROM producto WHERE producto_id = ${cat_prod.rows[index].producto_id}`);
+            const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${cat_prod.rows[index].producto_id}`);
             const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
             const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
+
             productos.push({
-                message : `Producto #${index + 1}`,
-                producto: product.rows[0],
-                proveedor: proveedor.rows[0],
-                marca: marca.rows[0]
+              producto_id : product.rows[0].producto_id,
+              marca : marca.rows[0].nombre,
+              proveedor : proveedor.rows[0].nombre,
+              imagen : product.rows[0].imagen,
+              titulo : product.rows[0].titulo,
+              descripcion_1 : product.rows[0].descripcion,
+              descripcion_2 : variante.rows[0].descripcion,
+              caracteristicas : variante.rows[0].caracteristicas,
+              precio : variante.rows[0].precio,
+              stock : variante.rows[0].stock
             });
         }
 
