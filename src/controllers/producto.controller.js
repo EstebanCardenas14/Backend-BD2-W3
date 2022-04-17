@@ -92,39 +92,30 @@ const getProductById = async (req = request, res = response) => {
             });
         }
 
-        //verify the existence of the marca
-        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
-        if (marca.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'La marca no existe'
-            });
-        }
-
-        //verify the existence of the provider
+        let producto = [];
+        const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${product.rows[0].producto_id}`);
         const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${product.rows[0].proveedor_id}`);
-        if (proveedor.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El proveedor no existe'
-            });
-        }
+        const usuario = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
+        const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
 
-        //verify the existence of the user
-        const user = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
-        if (user.rowCount === 0) {
-            return res.status(400).json({
-                ok: false,
-                message: 'El usuario no existe'
-            });
-        }
+        producto.push({
+             producto_id : product.rows[0].producto_id,
+              marca : marca.rows[0].nombre,
+              proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
+              imagen : product.rows[0].imagen,
+              titulo : product.rows[0].titulo,
+              descripcion_1 : product.rows[0].descripcion,
+              descripcion_2 : variante.rows[0].descripcion,
+              caracteristicas : variante.rows[0].caracteristicas,
+              precio : variante.rows[0].precio,
+              stock : variante.rows[0].stock
+        });
+
 
         return res.status(200).json({
             ok: true,
             message: 'Producto encontrado',
-            producto: product.rows[0],
-            marca: marca.rows[0],
-            proveedor: user.rows[0]
+            producto: producto
         });
 
     } catch (error) {
@@ -153,13 +144,12 @@ const getAll = async (req = request, res = response) => {
             const variante = await db.query(`SELECT * FROM variante WHERE producto_id = ${prod.rows[index].producto_id}`);
             const proveedor = await db.query(`SELECT * FROM proveedor WHERE proveedor_id = ${prod.rows[index].proveedor_id}`);
             const usuario = await db.query(`SELECT * FROM usuario WHERE usuario_id = ${proveedor.rows[0].usuario_id}`);
-            console.log(proveedor);
             const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
 
             productos.push({
               producto_id : product.rows[0].producto_id,
               marca : marca.rows[0].nombre,
-              proveedor : usuario.rows[0].nombre,
+              proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
               imagen : product.rows[0].imagen,
               titulo : product.rows[0].titulo,
               descripcion_1 : product.rows[0].descripcion,
@@ -215,7 +205,7 @@ const getProductByTitle = async (req = request, res = response) => {
             productos_encontrados.push({
                 producto_id : product.rows[0].producto_id,
                 marca : marca.rows[0].nombre,
-                proveedor : usuario.rows[0].nombre,
+                proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
                 imagen : product.rows[0].imagen,
                 titulo : product.rows[0].titulo,
                 descripcion_1 : product.rows[0].descripcion,
@@ -423,7 +413,7 @@ const getProductsByCategory = async (req = request, res = response) => {
             productos.push({
               producto_id : product.rows[0].producto_id,
               marca : marca.rows[0].nombre,
-              proveedor : usuario.rows[0].nombre,
+              proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
               imagen : product.rows[0].imagen,
               titulo : product.rows[0].titulo,
               descripcion_1 : product.rows[0].descripcion,
