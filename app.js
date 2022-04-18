@@ -13,7 +13,7 @@ const app = express();
 //Conection to Redis
 //const redis = new Redisconnection();
 //Conection to MongoDB
-//mongoDB();
+mongoDB();
 //Conection to Postgres
 //postgres();  
 
@@ -41,6 +41,7 @@ app.use('/producto', require('./src/routes/producto.routes'));
 app.use('/variante', require('./src/routes/variante.routes'));
 app.use('/redis', require('./src/routes/redis.routes'));
 app.use('/carrito', require('./src/routes/carrito.routes'));
+app.use('/checkout', require('./src/routes/checkout.routes'));
 
 
 

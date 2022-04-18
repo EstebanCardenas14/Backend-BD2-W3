@@ -72,7 +72,7 @@ const deleteCarrito = async (req, res) => {
 
 
         //delete the carrito
-        await db.query(`DELETE FROM carrito WHERE carrito_id = '${carrito_id}'`);
+     //   await db.query(`DELETE FROM carrito WHERE carrito_id = '${carrito_id}'`);
 
 
         return res.status(200).json({

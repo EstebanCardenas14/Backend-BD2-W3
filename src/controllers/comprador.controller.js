@@ -11,9 +11,9 @@ const create = async (req = request, res = response) => {
         //verify the existence of the buyer
         await validateUser('Comprador',id_documento, username, num_doc, telefono, correo);
         //create the buyer
-       const user = await createUser('Comprador', id_documento, username, num_doc, nombres, apellidos, telefono, correo, clave);
+        const user = await createUser('Comprador', id_documento, username, num_doc, nombres, apellidos, telefono, correo, clave);
         //associate the user to the buyer table
-        await db.query(`INSERT INTO comprador(usuario_id, estado) VALUES (${user.usuario_id}, ${true})`);
+        let comprador = await db.query(`INSERT INTO comprador(usuario_id, estado) VALUES (${user.usuario_id}, ${true}) RETURNING *`);
         return res.status(200).json({
             ok: true,
             message: 'Comprador creado',
