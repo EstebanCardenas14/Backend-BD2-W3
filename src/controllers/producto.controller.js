@@ -99,7 +99,8 @@ const getProductById = async (req = request, res = response) => {
         const marca = await db.query(`SELECT * FROM marca WHERE marca_id = ${product.rows[0].marca_id}`);
 
         producto.push({
-             producto_id : product.rows[0].producto_id,
+              producto_id : product.rows[0].producto_id,
+              variante_id : variante.rows[0].variante_id,
               marca : marca.rows[0].nombre,
               proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
               imagen : product.rows[0].imagen,
@@ -148,6 +149,7 @@ const getAll = async (req = request, res = response) => {
 
             productos.push({
               producto_id : product.rows[0].producto_id,
+              variante_id : variante.rows[0].variante_id,
               marca : marca.rows[0].nombre,
               proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
               imagen : product.rows[0].imagen,
@@ -204,6 +206,7 @@ const getProductByTitle = async (req = request, res = response) => {
 
             productos_encontrados.push({
                 producto_id : product.rows[0].producto_id,
+                variante_id : variante.rows[0].variante_id,
                 marca : marca.rows[0].nombre,
                 proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
                 imagen : product.rows[0].imagen,
@@ -412,6 +415,7 @@ const getProductsByCategory = async (req = request, res = response) => {
 
             productos.push({
               producto_id : product.rows[0].producto_id,
+              variante_id : variante.rows[0].variante_id,
               marca : marca.rows[0].nombre,
               proveedor : usuario.rows[0].nombres + ' ' + usuario.rows[0].apellidos,
               imagen : product.rows[0].imagen,

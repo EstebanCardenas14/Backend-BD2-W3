@@ -22,7 +22,7 @@ const verifyQuantity = async (variante_id, cantidad,req = request, res = respons
 
             //sustract the quantity from the product variant
             const sustract = await db.query(`UPDATE variante SET stock = stock - ${cantidad} WHERE variante_id = '${variante_id}' RETURNING *`);
-            console.log('Cantidad disponible: ',sustract.rows[0]);
+            console.log('Cantidad disponible: ',sustract.rows[0].stock);
             if (sustract.rowCount === 0) {
                 return reject('No se pudo actualizar el stock');
             }
