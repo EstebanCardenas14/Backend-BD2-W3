@@ -197,7 +197,7 @@ const redisConnection = async() => {
                         producto_id : producto.rows[0].producto_id,
                         producto_nombre: producto.rows[0].titulo,
                         producto_imagen: producto.rows[0].imagen,
-                        producto_preciov: producto.rows[0].precio,
+                        producto_precio: producto.rows[0].precio,
                         producto_cantidad: product.Cantidad,
                         proveedor_nombre: usuario.rows[0].nombres,
                         marca_nombre: marca.rows[0].nombre
@@ -228,18 +228,6 @@ const redisConnection = async() => {
         }
     }
     
-                
-
-
-                    
-
-
-
-         
-
-
-  
-
     module.exports = {
         redisConnection,
         getAll,
